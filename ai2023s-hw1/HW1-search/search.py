@@ -223,8 +223,6 @@ def depthFirstSearch(problem: SearchProblem):
     current = Node(state, parent_coor)
     current.setUp(problem=problem, explored=dict(), fringe=util.Stack())
     while not current.isGoal():
-        print("-" * 10)
-        print(current)
         successors = current.expand()
         current.push_to_explored()
         [s.fringe_push() for s in successors]
@@ -249,7 +247,6 @@ def breadthFirstSearch(problem: SearchProblem):
     current = Node(state, parent_coor)
     current.setUp(problem=problem, explored=dict(), fringe=util.Queue())
     while not current.isGoal():
-        print(current)
         successors = current.expand()
         current.push_to_explored()
         [s.fringe.push(s) for s in successors if not s.coor_in_fringe()]
