@@ -9,11 +9,20 @@ pacman: ## pacman maze=[tinyMaze, mediumMaze, bigMaze] fn=[tinyMazeSearch, dfs, 
 	python pacman.py -l $(maze) -p SearchAgent -a fn=$(fn) -q
 
 mazes: ## make all mazes
-	for maze in tinyMaze mediumMaze bigMaze ; do \
-		for fn in tinyMazeSearch dfs bfs ucs astar ; do \
-			python pacman.py -l $$maze -p SearchAgent -a fn=$$fn -q ; \
-		done \
-	done
+	python pacman.py -l tinyMaze -p SearchAgent -a fn=tinyMazeSearch -q
+	python pacman.py -l mediumMaze -p SearchAgent -a fn=dfs -q
+	python pacman.py -l bigMaze -z .5 -p SearchAgent -a fn=dfs -q
+
+	python pacman.py -l tinyMaze -p SearchAgent -a fn=bfs -q
+	python pacman.py -l mediumMaze -p SearchAgent -a fn=bfs -q
+	python pacman.py -l bigMaze -z .5 -p SearchAgent -a fn=bfs -q
+
+	python pacman.py -l mediumMaze -p SearchAgent -a fn=ucs -q
+
+	python pacman.py -l mediumDottedMaze -p StayEastSearchAgent -q
+	python pacman.py -l mediumScaryMaze -p StayWestSearchAgent -q
+
+	python pacman.py -l bigMaze -z .5 -p SearchAgent -a fn=astar,heuristic=manhattanHeuristic -q
 
 qs: ## make all qs
 	for q in q1 q2 q3 q4 ; do \
