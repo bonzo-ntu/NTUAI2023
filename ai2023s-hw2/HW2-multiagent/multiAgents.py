@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -19,6 +19,11 @@ import random, util
 from game import Agent
 from pacman import GameState
 
+
+from math import sqrt
+from functools import partial
+
+
 class ReflexAgent(Agent):
     """
     A reflex agent chooses an action at each choice point by examining
@@ -28,7 +33,6 @@ class ReflexAgent(Agent):
     it in any way you see fit, so long as you don't touch our method
     headers.
     """
-
 
     def getAction(self, gameState: GameState):
         """
@@ -46,10 +50,13 @@ class ReflexAgent(Agent):
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
 
         "Add more of your code here if you want to"
 
+        # print("=" * 30)
+        # print(f"scores:{scores} actions:{legalMoves}, action:{legalMoves[chosenIndex]}")
+        # print("=" * 30)
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState: GameState, action):
@@ -94,8 +101,59 @@ class ReflexAgent(Agent):
         # Count down from 40 moves
         ghostStartPos = [ghostState.start.getPosition() for ghostState in newGhostStates]
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()  # default scoure
-        # please change the return score as the score you want
+
+        def dxdy(a, b):
+            (ax, ay), (bx, by) = a, b
+            return ax - bx, ay - by
+
+        def manhaton(a, b):
+            dx, dy = dxdy(a, b)
+            return abs(dx) + abs(dy)
+
+        def manhaton_cnt(a, b, th):
+            return manhaton(a, b) > th
+
+        def count(_, b, th):
+            return b > th
+
+        def euclidean(a, b):
+            dx, dy = dxdy(a, b)
+            return sqrt(dx**2 + dy**2)
+
+        def dists(pacmanPos, posList, measure=manhaton):
+            x, y = pacmanPos
+            return [measure(pacmanPos, pos) for pos in posList]
+
+        w1, w2, w3, w4, w5 = 1, 1, 1, 1, 5
+
+        newWalls = successorGameState.getWalls()
+        maxDist = newWalls.height + newWalls.width
+
+        # food score
+        foodPositions = newFood.asList()
+        foodCount = newFood.count()
+        foodDistance = dists(newPos, foodPositions, measure=manhaton)
+        foodDistanceMin = min(foodDistance) / maxDist if foodCount > 0 else 0
+
+        # capsule score
+        capsuleCount = len(newCapsule)
+        capsuleDistance = dists(newPos, newCapsule, measure=manhaton)
+        capsuleDistanceMin = (min(capsuleDistance) if capsuleDistance else 0) / maxDist
+
+        # ghost score
+        ghostDistance = dists(newPos, ghostPositions, measure=partial(manhaton_cnt, th=1))
+        ghostDistanceCnt = sum(ghostDistance)
+        ghostScareTime = dists(newPos, newScaredTimes, measure=partial(count, th=1))
+        ghostScareTimeCnt = sum(ghostScareTime)
+
+        capsuleScore = -capsuleDistanceMin * w4 + -capsuleCount * w5
+        foodScore = -foodCount * w1 + -foodDistanceMin * w2
+        ghostScore = ghostDistanceCnt * w3 if not ghostScareTimeCnt else -ghostDistanceCnt * w3
+
+        score = foodScore + ghostScore + capsuleScore + successorGameState.getScore()
+
+        return score
+
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
@@ -106,6 +164,7 @@ def scoreEvaluationFunction(currentGameState: GameState):
     (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -122,10 +181,11 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
-    def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
+    def __init__(self, evalFn="scoreEvaluationFunction", depth="2"):
+        self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
@@ -158,6 +218,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
 
+
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
@@ -170,9 +231,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
 
+
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
-      Your expectimax agent (question 4)
+    Your expectimax agent (question 4)
     """
 
     def getAction(self, gameState: GameState):
@@ -184,4 +246,3 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
-
