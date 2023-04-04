@@ -192,6 +192,44 @@ class MinimaxAgent(MultiAgentSearchAgent):
     Your minimax agent (question 2)
     """
 
+    def value(self, gameState, agentIndex, depth):
+        if gameState.isLose() or gameState.isWin() or depth == 0:
+            return "Stop", self.evaluationFunction(gameState)
+
+        if self.isPacman(agentIndex):
+            return self.max_value(gameState, agentIndex, depth)
+        else:
+            return self.min_value(gameState, agentIndex, depth)
+
+    def max_value(self, gameState, agentIndex, depth):
+        depth = depth - 1 if agentIndex == self.agentNum - 1 else depth
+        legalMoves = gameState.getLegalActions(agentIndex)
+        action_value = dict()
+        for action in legalMoves:
+            state = gameState.generateSuccessor(agentIndex, action)
+            _, value = self.value(state, (agentIndex + 1) % self.agentNum, depth)
+            action_value[action] = value
+        else:
+            best = sorted(action_value.items(), key=lambda x: x[1], reverse=True)[0]
+            action, value = best
+            return action, value
+
+    def min_value(self, gameState, agentIndex, depth):
+        depth = depth - 1 if agentIndex == self.agentNum - 1 else depth
+        legalMoves = gameState.getLegalActions(agentIndex)
+        action_value = dict()
+        for action in legalMoves:
+            state = gameState.generateSuccessor(agentIndex, action)
+            _, value = self.value(state, (agentIndex + 1) % self.agentNum, depth)
+            action_value[action] = value
+        else:
+            best = sorted(action_value.items(), key=lambda x: x[1], reverse=False)[0]
+            action, value = best
+            return action, value
+
+    def isPacman(self, agentIndex):
+        return agentIndex == 0
+
     def getAction(self, gameState: GameState):
         """
         Returns the minimax action from the current gameState using self.depth
@@ -216,7 +254,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        self.agentNum = gameState.getNumAgents()
+        action, _ = self.value(gameState, 0, self.depth)
+        return action
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
